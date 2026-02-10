@@ -3,6 +3,8 @@
   <h1>TradingView™ Screener API</h1>
 </div>
 
+**English | [繁體中文](README.zh-TW.md)**
+
 -----------------
 
 # TradingView™ Screener API: simple Python library to retrieve data from TradingView™ Screener
