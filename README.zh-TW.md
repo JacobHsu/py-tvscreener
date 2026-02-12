@@ -363,3 +363,160 @@ for df in ss.stream(interval=30, max_iterations=10):
 | [03-crypto.ipynb](docs/notebooks/03-crypto.ipynb) | 加密貨幣分析 |
 | [04-forex.ipynb](docs/notebooks/04-forex.ipynb) | 外匯配對篩選 |
 | [05-bonds-futures.ipynb](docs/notebooks/05-bonds-futures.ipynb) | 債券與期貨 |
+
+---
+
+## Telegram 通知
+
+本專案透過 GitHub Actions 每小時自動發送 BTC/ETH 1H 技術指標通知至 Telegram。
+
+### 訊息範例
+
+```
+🕐 2026-02-12 15:00 (台北時間)
+
+【 🔶 BTC $67,374 +320 (+0.48%) 】
+
+⚠️ Tech: Sell
+MA: Sell Buy: (4) Sell: (8) ✘
+Oscillator: Neutral Buy: (3) Sell: (2)
+Fibonacci: S1 $62,501 | R1 $77,292
+RSI: 48.0 | MACD: +140.4 ▲ | ADX: 26.1 (Trending)
+BB: $66,172 | DC: $65,756 | ATR: 779.5 (~)
+VWAP: $67,287 | MFI: 59.6
+🗣️ 1H: 📉 Down 震盪偏空
+🐻: MA均線空排，RSI 48偏弱，MACD柱狀收斂中，壓力R1($77,292)
+
+📊 TradingView Screener
+```
+
+### 訊息欄位說明
+
+#### 價格區塊
+
+| 欄位 | 說明 |
+|------|------|
+| 🔶 / 🔹 | BTC / ETH 識別 |
+| `$67,374` | 當前價格 |
+| `+320 (+0.48%)` | 價格變動（絕對值 + 百分比） |
+
+#### 三大評級（對應 TradingView Technicals）
+
+| 欄位 | 來源 | 說明 |
+|------|------|------|
+| `Tech:` | Technical Rating | MA + Oscillator 綜合評級 |
+| `MA:` | Moving Averages Rating | 12 條均線評級（EMA/SMA 10,20,50,100,200 + Hull MA + VWMA） |
+| `Oscillator:` | Oscillators Rating | 11 個振盪指標評級 |
+
+評級值：`Strong Buy` / `Buy` / `Neutral` / `Sell` / `Strong Sell`
+
+`Buy: (n)` / `Sell: (n)` — 個別指標的多空計數，未顯示的為 Neutral
+
+`✘` — 當 Sell 數量 > Buy 數量時出現
+
+#### MA Buy/Sell 判定規則（12 個）
+
+| 指標 | Buy | Sell |
+|------|-----|------|
+| EMA / SMA (10,20,50,100,200) | Price > MA | Price < MA |
+| Hull MA (9) | Price > MA | Price < MA |
+| VWMA (20) | Price > MA | Price < MA |
+
+#### Oscillator Buy/Sell 判定規則（11 個）
+
+| 指標 | Buy | Sell |
+|------|-----|------|
+| RSI (14) | < 30 | > 70 |
+| Stochastic %K | < 20 | > 80 |
+| CCI (20) | < -100 | > 100 |
+| ADX (+DI/-DI) | +DI > -DI | +DI < -DI |
+| Awesome Oscillator | > 0 | < 0 |
+| Momentum (10) | > 0 | < 0 |
+| MACD (Level vs Signal) | Level > Signal | Level < Signal |
+| Stoch RSI Fast | < 20 | > 80 |
+| Williams %R | < -80 | > -20 |
+| Bull Bear Power | > 0 | < 0 |
+| Ultimate Oscillator | < 30 | > 70 |
+
+#### 支撐 / 壓力
+
+| 欄位 | 說明 |
+|------|------|
+| `Fibonacci: S1 / R1` | Fibonacci Pivot 支撐1 / 壓力1，**粗體**標示較接近當前價格的一方 |
+
+#### 動能指標
+
+| 欄位 | 說明 |
+|------|------|
+| `RSI` | 相對強弱指數 (14)。< 30 超賣、> 70 超買 |
+| `MACD` | MACD 柱狀圖值（Histogram = Level - Signal） |
+| `▲` / `▼` | MACD 柱狀圖方向。`▲` 正值（多方動能）、`▼` 負值（空方動能） |
+
+#### ADX 趨勢強度
+
+| ADX 值 | 標籤 | 意義 |
+|--------|------|------|
+| >= 25 | `(Trending)` | 趨勢確立，適合順勢操作 |
+| < 25 | `(Ranging)` | 盤整區間，適合高賣低買 |
+
+#### 通道與波動
+
+| 欄位 | 說明 |
+|------|------|
+| `BB:` | Bollinger Band Lower (20) — 布林通道下限，價格接近時為潛在支撐 |
+| `DC:` | Donchian Channel Lower (20) — 唐納奇通道下限（**粗體**），20 期最低價，極端支撐 |
+| `ATR:` | Average True Range (14) — 平均真實波幅，衡量每根 K 棒的平均波動範圍 |
+
+#### ATR 波動狀態
+
+以 ATR 佔價格百分比判斷：`ATR% = ATR / Price × 100`
+
+| ATR% | 符號 | 意義 |
+|------|------|------|
+| >= 1.5% | `(~)` | 波動劇烈，行情活躍 |
+| < 1.5% | `(-)` | 波動平靜，行情收斂 |
+
+#### 成交量指標
+
+| 欄位 | 說明 |
+|------|------|
+| `VWAP` | 成交量加權平均價 — 機構參考價格，價格在上方 = 多方控制，下方 = 空方控制 |
+| `MFI` | 資金流量指數 — 帶成交量的 RSI。< 20 超賣、> 80 超買 |
+
+#### AI 預測（GitHub Models API）
+
+| 欄位 | 說明 |
+|------|------|
+| `🗣️ 1H:` | AI 預測方向 + 走勢類型 |
+| `📈` / `📉` | 預測方向。📈 Up / 📉 Down |
+| `🐂` / `🐻` | 技術分析理由。🐂 多方 / 🐻 空方 |
+
+走勢類型：
+
+| 類型 | 說明 |
+|------|------|
+| `單邊上漲` | 強勢多頭，大部分指標偏多 |
+| `震盪偏多` | 震盪格局但偏多方 |
+| `震盪偏空` | 震盪格局但偏空方 |
+| `單邊下跌` | 強勢空頭，大部分指標偏空 |
+
+### 設定方式
+
+1. 在 GitHub repo Settings → Secrets 加入：
+   - `TELEGRAM_BOT_TOKEN` — 從 @BotFather 取得
+   - `TELEGRAM_CHAT_ID` — 你的聊天 ID
+
+2. GitHub Actions 排程 `0 * * * *`（每小時整點，台灣時間每整點發送）
+
+3. 本地測試：
+   ```bash
+   # 複製 .env
+   cp .env.example .env
+   # 填入 TELEGRAM_BOT_TOKEN 和 TELEGRAM_CHAT_ID
+
+   # 僅列印不發送
+   python scripts/send_tg_notification.py --dry-run
+
+   # 實際發送
+   python scripts/send_tg_notification.py
+   ```

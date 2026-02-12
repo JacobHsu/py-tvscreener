@@ -515,27 +515,42 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     adx = _safe(d.get("adx_14"))
 
     rsi_str = fmt_num(rsi)
+    rsi_extreme = rsi is not None and (rsi < 30 or rsi > 70)
+    rsi_display = f"<b>{rsi_str}</b>" if rsi_extreme else rsi_str
+
     macd_str = f"{macd_hist:+.1f}" if macd_hist is not None else "—"
     macd_dir = _macd_arrow(macd_hist)
+
     adx_str = fmt_num(adx)
+    adx_extreme = adx is not None and adx > 50
+    adx_display = f"<b>{adx_str}</b>" if adx_extreme else adx_str
     adx_label = "(Trending)" if adx is not None and adx >= 25 else "(Ranging)"
 
-    lines.append(f"RSI: {rsi_str} | MACD: {macd_str} {macd_dir} | ADX: {adx_str} {adx_label}")
+    lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | ADX: {adx_display} {adx_label}")
 
     # ── BB | DC (bold) | ATR
     bb_lower = _safe(d.get("bb_lower"))
     dc_lower = _safe(d.get("donchian_lower"))
     atr = _safe(d.get("atr_14"))
 
+    atr_pct = (atr / price * 100) if atr and price else None
+    atr_volatile = atr_pct is not None and atr_pct >= 1.5
+    atr_sym = "(~)" if atr_volatile else "(-)"
+    atr_display = f"<b>{fmt_num(atr)}</b>" if atr_volatile else fmt_num(atr)
+
     lines.append(
-        f"BB: ${fmt_price(bb_lower)} | DC: $<b>{fmt_price(dc_lower)}</b> | ATR: {fmt_num(atr)}"
+        f"BB: ${fmt_price(bb_lower)} | DC: $<b>{fmt_price(dc_lower)}</b> | ATR: {atr_display} {atr_sym}"
     )
 
     # ── VWAP | MFI
     vwap = _safe(d.get("vwap"))
     mfi = _safe(d.get("mfi"))
 
-    lines.append(f"VWAP: ${fmt_price(vwap)} | MFI: {fmt_num(mfi)}")
+    mfi_str = fmt_num(mfi)
+    mfi_extreme = mfi is not None and (mfi < 20 or mfi > 80)
+    mfi_display = f"<b>{mfi_str}</b>" if mfi_extreme else mfi_str
+
+    lines.append(f"VWAP: ${fmt_price(vwap)} | MFI: {mfi_display}")
 
     # ── AI Prediction
     if pred:
