@@ -509,10 +509,9 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         else:
             lines.append(f"Fibonacci: S1 ${s1_str} | R1 <b>${r1_str}</b>")
 
-    # ── RSI | MACD | ADX
+    # ── RSI | MACD
     rsi = _safe(d.get("rsi_14"))
     macd_hist = _safe(d.get("macd_hist"))
-    adx = _safe(d.get("adx_14"))
 
     rsi_str = fmt_num(rsi)
     rsi_extreme = rsi is not None and (rsi < 30 or rsi > 70)
@@ -521,21 +520,43 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     macd_str = f"{macd_hist:+.1f}" if macd_hist is not None else "—"
     macd_dir = _macd_arrow(macd_hist)
 
-    adx_str = fmt_num(adx)
-    adx_extreme = adx is not None and adx > 50
-    adx_display = f"<b>{adx_str}</b>" if adx_extreme else adx_str
+    lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir}")
 
+    # ── ADX | Aroon（同向雙重確認才加粗）
+    adx = _safe(d.get("adx_14"))
     plus_di = _safe(d.get("plus_di"))
     minus_di = _safe(d.get("minus_di"))
-    if adx is not None and adx >= 25:
-        if plus_di is not None and minus_di is not None:
-            adx_label = "▲" if plus_di > minus_di else "▼"
-        else:
-            adx_label = ""
-    else:
-        adx_label = "(=)"
+    aroon_up = _safe(d.get("aroon_up"))
+    aroon_down = _safe(d.get("aroon_down"))
 
-    lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | ADX: {adx_display} {adx_label}")
+    adx_str = fmt_num(adx)
+    adx_extreme = adx is not None and adx > 50
+
+    # ADX 方向（趨勢時）
+    adx_trending = adx is not None and adx >= 25
+    if adx_trending and plus_di is not None and minus_di is not None:
+        adx_bull = plus_di > minus_di
+        adx_dir = "▲" if adx_bull else "▼"
+    else:
+        adx_bull = None
+        adx_dir = "(=)"
+
+    # Aroon 方向
+    if aroon_up is not None and aroon_down is not None:
+        aroon_bull = aroon_up > aroon_down
+        aroon_dir = "▲" if aroon_bull else "▼"
+        aroon_str = f"{fmt_num(aroon_up)}/{fmt_num(aroon_down)}"
+    else:
+        aroon_bull = None
+        aroon_dir = ""
+        aroon_str = "—"
+
+    # 同向確認 → 粗體
+    aligned = (adx_bull is not None and aroon_bull is not None and adx_bull == aroon_bull)
+    adx_display = f"<b>{adx_str}</b>" if (aligned or adx_extreme) else adx_str
+    aroon_display = f"<b>{aroon_str}</b>" if aligned else aroon_str
+
+    lines.append(f"ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
 
     # ── BB | DC (bold) | ATR
     bb_lower = _safe(d.get("bb_lower"))
