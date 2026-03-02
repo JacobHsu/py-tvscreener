@@ -542,15 +542,24 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         f"BB: ${fmt_price(bb_lower)} | DC: $<b>{fmt_price(dc_lower)}</b> | ATR: {atr_display} {atr_sym}"
     )
 
-    # ── VWAP | MFI
+    # ── VWAP | VWMA | MFI
     vwap = _safe(d.get("vwap"))
+    vwma = _safe(d.get("vwma_20"))
     mfi = _safe(d.get("mfi"))
+
+    # VWAP + VWMA 同向（同多或同空）才加粗
+    vwap_bull = vwap is not None and price is not None and price > vwap
+    vwma_bull = vwma is not None and price is not None and price > vwma
+    vol_aligned = (vwap is not None and vwma is not None) and (vwap_bull == vwma_bull)
+
+    vwap_display = f"<b>{fmt_price(vwap)}</b>" if vol_aligned else fmt_price(vwap)
+    vwma_display = f"<b>{fmt_price(vwma)}</b>" if vol_aligned else fmt_price(vwma)
 
     mfi_str = fmt_num(mfi)
     mfi_extreme = mfi is not None and (mfi < 20 or mfi > 80)
     mfi_display = f"<b>{mfi_str}</b>" if mfi_extreme else mfi_str
 
-    lines.append(f"VWAP: ${fmt_price(vwap)} | MFI: {mfi_display}")
+    lines.append(f"VWAP: ${vwap_display} | VWMA: ${vwma_display} | MFI: {mfi_display}")
 
     # ── AI Prediction
     if pred:
