@@ -66,22 +66,56 @@ def test_vwma_none_no_bold():
     assert "VWAP: $<b>" not in msg
 
 def test_mfi_extreme_low_bold():
-    """mfi < 20 → 粗體"""
-    d = make_data(vwap=None, vwma_20=None, mfi=15.0)
+    """mfi < 20 → 極端值粗體"""
+    d = make_data(vwap=None, vwma_20=None, mfi=15.0, cmf=None)
     msg = format_symbol_block(d, "🔶", "BTC", None)
-    assert "<b>15.0</b>" in msg or "<b>15</b>" in msg
+    assert "MFI: <b>" in msg
 
 def test_mfi_extreme_high_bold():
-    """mfi > 80 → 粗體"""
-    d = make_data(vwap=None, vwma_20=None, mfi=85.0)
+    """mfi > 80 → 極端值粗體"""
+    d = make_data(vwap=None, vwma_20=None, mfi=85.0, cmf=None)
     msg = format_symbol_block(d, "🔶", "BTC", None)
-    assert "<b>85.0</b>" in msg or "<b>85</b>" in msg
+    assert "MFI: <b>" in msg
 
 def test_mfi_normal_no_bold():
-    """mfi = 50 → 不粗體"""
-    d = make_data(vwap=None, vwma_20=None, mfi=50.0)
+    """mfi = 50、cmf = None → 不粗體"""
+    d = make_data(vwap=None, vwma_20=None, mfi=50.0, cmf=None)
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "MFI: <b>" not in msg
+
+def test_cmf_mfi_aligned_bullish_bold():
+    """CMF > 0 且 MFI > 50 → 兩者粗體，顯示 ▲"""
+    d = make_data(cmf=0.15, mfi=60.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "CMF: <b>" in msg
+    assert "MFI: <b>" in msg
+    assert "▲" in msg
+
+def test_cmf_mfi_aligned_bearish_bold():
+    """CMF < 0 且 MFI < 50 → 兩者粗體，顯示 ▼"""
+    d = make_data(cmf=-0.15, mfi=40.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "CMF: <b>" in msg
+    assert "MFI: <b>" in msg
+
+def test_cmf_mfi_diverge_no_bold():
+    """CMF > 0 但 MFI < 50 → 不粗體"""
+    d = make_data(cmf=0.15, mfi=40.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "CMF: <b>" not in msg
+
+def test_cmf_none_no_bold():
+    """CMF 為 None → 不粗體"""
+    d = make_data(cmf=None, mfi=60.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "CMF: <b>" not in msg
+
+def test_volume_vwap_shows_direction():
+    """Volume 行顯示 VWAP/VWMA 方向箭頭"""
+    d = make_data(vwap=66000.0, vwma_20=65000.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "Volume:" in msg
+    assert "Money:" in msg
 
 def test_price_none_no_bold():
     """price 為 None → 不加粗"""

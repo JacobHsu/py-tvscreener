@@ -579,12 +579,10 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
 
     lines.append(f"Trend: ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
 
-    # ── VWAP | VWMA | MFI
+    # ── Volume: VWAP | VWMA（同向才加粗）
     vwap = _safe(d.get("vwap"))
     vwma = _safe(d.get("vwma_20"))
-    mfi = _safe(d.get("mfi"))
 
-    # VWAP + VWMA 同向（同多或同空）才加粗
     vwap_bull = vwap is not None and price is not None and price > vwap
     vwma_bull = vwma is not None and price is not None and price > vwma
     vol_aligned = (
@@ -596,12 +594,33 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
 
     vwap_display = f"<b>{fmt_price(vwap)}</b>" if vol_aligned else fmt_price(vwap)
     vwma_display = f"<b>{fmt_price(vwma)}</b>" if vol_aligned else fmt_price(vwma)
+    vwap_dir = "▲" if vwap_bull else "▼" if vwap is not None and price is not None else ""
+    vwma_dir = "▲" if vwma_bull else "▼" if vwma is not None and price is not None else ""
+
+    lines.append(f"Volume: VWAP: ${vwap_display} {vwap_dir} | VWMA: ${vwma_display} {vwma_dir}")
+
+    # ── Money: CMF | MFI（同向才加粗）
+    cmf = _safe(d.get("cmf"))
+    mfi = _safe(d.get("mfi"))
+
+    cmf_bull = cmf is not None and cmf > 0
+    mfi_bull = mfi is not None and mfi > 50
+    money_aligned = (
+        cmf is not None
+        and mfi is not None
+        and cmf_bull == mfi_bull
+    )
+
+    cmf_str = f"{cmf:+.2f}" if cmf is not None else "—"
+    cmf_dir = "▲" if cmf_bull else "▼" if cmf is not None else ""
+    cmf_display = f"<b>{cmf_str}</b>" if money_aligned else cmf_str
 
     mfi_str = fmt_num(mfi)
+    mfi_dir = "▲" if mfi_bull else "▼" if mfi is not None else ""
     mfi_extreme = mfi is not None and (mfi < 20 or mfi > 80)
-    mfi_display = f"<b>{mfi_str}</b>" if mfi_extreme else mfi_str
+    mfi_display = f"<b>{mfi_str}</b>" if (money_aligned or mfi_extreme) else mfi_str
 
-    lines.append(f"Volume: VWAP: ${vwap_display} | VWMA: ${vwma_display} | MFI: {mfi_display}")
+    lines.append(f"Money: CMF: {cmf_display} {cmf_dir} | MFI: {mfi_display} {mfi_dir}")
 
     # ── AI Prediction
     if pred:
