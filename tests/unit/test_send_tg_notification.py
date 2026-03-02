@@ -57,6 +57,7 @@ def test_vwap_none_no_bold():
     d = make_data(vwap=None, vwma_20=65000.0)
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "VWAP" in msg
+    assert "VWAP: $<b>" not in msg
 
 def test_vwma_none_no_bold():
     """vwma_20 為 None → 不加粗"""
