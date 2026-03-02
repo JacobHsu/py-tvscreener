@@ -90,3 +90,28 @@ def test_price_none_no_bold():
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "VWAP: $<b>" not in msg
     assert "VWMA: $<b>" not in msg
+
+
+def test_adx_trending_bullish():
+    """+DI > -DI → (Trending ▲)"""
+    d = make_data(adx_14=30.0, plus_di=25.0, minus_di=15.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "(Trending ▲)" in msg
+
+def test_adx_trending_bearish():
+    """+DI < -DI → (Trending ▼)"""
+    d = make_data(adx_14=30.0, plus_di=15.0, minus_di=25.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "(Trending ▼)" in msg
+
+def test_adx_ranging():
+    """adx < 25 → (=)"""
+    d = make_data(adx_14=18.0, plus_di=20.0, minus_di=15.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "(=)" in msg
+
+def test_adx_trending_di_none():
+    """+DI/-DI 為 None → (Trending) 不崩潰"""
+    d = make_data(adx_14=30.0, plus_di=None, minus_di=None)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "(Trending)" in msg

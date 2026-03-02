@@ -524,7 +524,17 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     adx_str = fmt_num(adx)
     adx_extreme = adx is not None and adx > 50
     adx_display = f"<b>{adx_str}</b>" if adx_extreme else adx_str
-    adx_label = "(Trending)" if adx is not None and adx >= 25 else "(Ranging)"
+
+    plus_di = _safe(d.get("plus_di"))
+    minus_di = _safe(d.get("minus_di"))
+    if adx is not None and adx >= 25:
+        if plus_di is not None and minus_di is not None:
+            di_arrow = "▲" if plus_di > minus_di else "▼"
+        else:
+            di_arrow = ""
+        adx_label = f"(Trending {di_arrow})" if di_arrow else "(Trending)"
+    else:
+        adx_label = "(=)"
 
     lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | ADX: {adx_display} {adx_label}")
 
