@@ -577,7 +577,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         f"BB: ${fmt_price(bb_lower)} | DC: $<b>{fmt_price(dc_lower)}</b> | ATR: {atr_display} {atr_sym}"
     )
 
-    lines.append(f"Trend: ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
+    lines.append(f"Trend- ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
 
     # ── Volume: VWAP | VWMA（同向才加粗）
     vwap = _safe(d.get("vwap"))
@@ -597,7 +597,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     vwap_dir = "▲" if vwap_bull else "▼" if vwap is not None and price is not None else ""
     vwma_dir = "▲" if vwma_bull else "▼" if vwma is not None and price is not None else ""
 
-    lines.append(f"Volume: VWAP: ${vwap_display} {vwap_dir} | VWMA: ${vwma_display} {vwma_dir}")
+    lines.append(f"Volume- VWAP: ${vwap_display} {vwap_dir} | VWMA: ${vwma_display} {vwma_dir}")
 
     # ── Money: CMF | MFI（同向才加粗）
     cmf = _safe(d.get("cmf"))

@@ -563,3 +563,44 @@ Money: CMF: +0.12 ▲ | MFI: 59.6 ▲            ← 同向粗體
    # 實際發送
    python scripts/send_tg_notification.py
    ```
+
+---
+
+## 評級訊號圖表
+
+透過互動式 HTML 頁面視覺化歷史評級訊號，搭配 TradingView 即時 K 線圖對照分析。
+
+### 執行方式
+
+```bash
+# BTC（預設）
+python scripts/chart_rating_signals.py
+
+# ETH
+python scripts/chart_rating_signals.py ETHUSDT
+
+# 其他幣種
+python scripts/chart_rating_signals.py SOLUSDT
+```
+
+執行後自動開啟瀏覽器。
+
+### 頁面結構
+
+| 區塊 | 說明 |
+|------|------|
+| 上方：TradingView 1H | 互動式 K 線圖，含 MA Ribbon、Supertrend、VWAP 指標 |
+| 下方：Price 走勢 | 價格折線圖，Y 軸在右側（$格式），X 軸顯示日期時間（Asia/Taipei） |
+| Technical Rating | 綜合評級色帶（Strong Buy / Buy / Neutral / Sell / Strong Sell） |
+| MA Rating | 均線評級色帶 |
+| Oscillator Rating | 震盪指標評級色帶 |
+
+### 色碼說明
+
+| 顏色 | 評級 |
+|------|------|
+| 🟢 深綠 | Strong Buy |
+| 🟩 淺綠 | Buy |
+| ⬜ 灰 | Neutral |
+| 🟥 淺紅 | Sell |
+| 🔴 深紅 | Strong Sell |
