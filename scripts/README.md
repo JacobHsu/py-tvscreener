@@ -50,7 +50,7 @@ Any other symbol will auto-resolve to `BINANCE:<SYMBOL>USDT`.
 | **Bollinger Bands** | Upper Band, Lower Band |
 | **Keltner Channels** | Upper Band, Lower Band |
 | **Donchian Channels** | Upper Band, Lower Band |
-| **Volume Indicators** | VWAP, Chaikin Money Flow, Money Flow Index |
+| **Volume Indicators** | VWAP, VWMA(20), Chaikin Money Flow, Money Flow Index |
 | **Ichimoku Cloud** | Base Line, Conversion Line, Leading Span A, Leading Span B |
 | **Pivot Classic** | P, R1, R2, R3, S1, S2, S3 |
 | **Pivot Fibonacci** | P, R1, R2, R3, S1, S2, S3 |
