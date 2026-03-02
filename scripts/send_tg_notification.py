@@ -563,8 +563,6 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     adx_display = f"<b>{adx_str}</b>" if (aligned or adx_extreme) else adx_str
     aroon_display = f"<b>{aroon_str}</b>" if aligned else aroon_str
 
-    lines.append(f"ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
-
     # ── BB | DC (bold) | ATR
     bb_lower = _safe(d.get("bb_lower"))
     dc_lower = _safe(d.get("donchian_lower"))
@@ -578,6 +576,8 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     lines.append(
         f"BB: ${fmt_price(bb_lower)} | DC: $<b>{fmt_price(dc_lower)}</b> | ATR: {atr_display} {atr_sym}"
     )
+
+    lines.append(f"Trend: ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
 
     # ── VWAP | VWMA | MFI
     vwap = _safe(d.get("vwap"))
@@ -601,7 +601,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     mfi_extreme = mfi is not None and (mfi < 20 or mfi > 80)
     mfi_display = f"<b>{mfi_str}</b>" if mfi_extreme else mfi_str
 
-    lines.append(f"VWAP: ${vwap_display} | VWMA: ${vwma_display} | MFI: {mfi_display}")
+    lines.append(f"Volume: VWAP: ${vwap_display} | VWMA: ${vwma_display} | MFI: {mfi_display}")
 
     # ── AI Prediction
     if pred:
