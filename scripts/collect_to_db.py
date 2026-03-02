@@ -133,6 +133,19 @@ COLUMN_MAP = {
     # --- Volatility (1H) ---
     f"Average True Range (14) ({INTERVAL})":  "atr_14",
     f"Parabolic SAR ({INTERVAL})":            "parabolic_sar",
+
+    # --- Candlestick Patterns (1H) ---
+    # Note: candle fields use "|60" suffix, not "(60)"
+    "Candle 3Whitesoldiers|60":        "candle_3white_soldiers",
+    "Candle 3Blackcrows|60":           "candle_3black_crows",
+    "Candle Morningstar|60":           "candle_morning_star",
+    "Candle Eveningstar|60":           "candle_evening_star",
+    "Candle Engulfing Bullish|60":     "candle_engulfing_bull",
+    "Candle Engulfing Bearish|60":     "candle_engulfing_bear",
+    "Candle Hammer|60":                "candle_hammer",
+    "Candle Invertedhammer|60":        "candle_inv_hammer",
+    "Candle Shootingstar|60":          "candle_shooting_star",
+    "Candle Hangingman|60":            "candle_hanging_man",
 }
 
 # SQL column names for the indicator data (excludes id, collected_at, symbol)
@@ -267,6 +280,17 @@ def build_fields():
         # Volatility
         CryptoField.AVERAGE_TRUE_RANGE_14.with_interval(I),
         CryptoField.PARABOLIC_SAR.with_interval(I),
+        # Candlestick Patterns (1H) — hardcoded to 60, no with_interval()
+        CryptoField.CANDLE_3WHITESOLDIERS_60,
+        CryptoField.CANDLE_3BLACKCROWS_60,
+        CryptoField.CANDLE_MORNINGSTAR_60,
+        CryptoField.CANDLE_EVENINGSTAR_60,
+        CryptoField.CANDLE_ENGULFING_BULLISH_60,
+        CryptoField.CANDLE_ENGULFING_BEARISH_60,
+        CryptoField.CANDLE_HAMMER_60,
+        CryptoField.CANDLE_INVERTEDHAMMER_60,
+        CryptoField.CANDLE_SHOOTINGSTAR_60,
+        CryptoField.CANDLE_HANGINGMAN_60,
     ]
 
 
@@ -376,7 +400,19 @@ CREATE TABLE IF NOT EXISTS technical_indicators (
 
     -- Volatility (1H)
     atr_14                      REAL,
-    parabolic_sar               REAL
+    parabolic_sar               REAL,
+
+    -- Candlestick Patterns (1H)
+    candle_3white_soldiers      INTEGER DEFAULT 0,
+    candle_3black_crows         INTEGER DEFAULT 0,
+    candle_morning_star         INTEGER DEFAULT 0,
+    candle_evening_star         INTEGER DEFAULT 0,
+    candle_engulfing_bull       INTEGER DEFAULT 0,
+    candle_engulfing_bear       INTEGER DEFAULT 0,
+    candle_hammer               INTEGER DEFAULT 0,
+    candle_inv_hammer           INTEGER DEFAULT 0,
+    candle_shooting_star        INTEGER DEFAULT 0,
+    candle_hanging_man          INTEGER DEFAULT 0
 );
 """
 
@@ -392,6 +428,18 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     conn.execute(CREATE_TABLE_SQL)
     conn.execute(CREATE_INDEX_SQL)
+    # Migration: add candle columns if not exist (safe to run multiple times)
+    candle_cols = [
+        "candle_3white_soldiers", "candle_3black_crows",
+        "candle_morning_star", "candle_evening_star",
+        "candle_engulfing_bull", "candle_engulfing_bear",
+        "candle_hammer", "candle_inv_hammer",
+        "candle_shooting_star", "candle_hanging_man",
+    ]
+    existing = {r[1] for r in conn.execute("PRAGMA table_info(technical_indicators)")}
+    for col in candle_cols:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE technical_indicators ADD COLUMN {col} INTEGER DEFAULT 0")
     conn.commit()
     conn.close()
     log.info("Database ready: %s", DB_PATH)

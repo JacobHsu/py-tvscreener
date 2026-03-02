@@ -37,6 +37,21 @@ TAIPEI_TZ = timezone(timedelta(hours=8))
 GITHUB_MODELS_URL = "https://models.github.ai/inference/chat/completions"
 GITHUB_MODELS_MODEL = "openai/gpt-4.1"
 
+# K-line candlestick patterns: priority order (highest first)
+# Each entry: (db_key, chinese_name, direction, short_desc)
+CANDLE_PATTERNS = [
+    ("candle_3white_soldiers", "三白兵",   "▲", "連三紅強確認"),
+    ("candle_3black_crows",    "三黑鴉",   "▼", "連三黑強確認"),
+    ("candle_morning_star",    "早晨之星", "▲", "三根K底部反轉"),
+    ("candle_evening_star",    "黃昏之星", "▼", "三根K頂部反轉"),
+    ("candle_engulfing_bull",  "多頭吞噬", "▲", "大紅包住前黑K"),
+    ("candle_engulfing_bear",  "空頭吞噬", "▼", "大黑包住前紅K"),
+    ("candle_hammer",          "錘形",     "▲", "下影長，底部止跌"),
+    ("candle_inv_hammer",      "倒錘形",   "▲", "上影長，買方試探"),
+    ("candle_shooting_star",   "射擊之星", "▼", "上影長，賣壓出現"),
+    ("candle_hanging_man",     "上吊線",   "▼", "下影長，頂部警示"),
+]
+
 
 # ============================================================
 # Local .env loader (for development)
@@ -497,6 +512,12 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     osc_buy, osc_sell = compute_osc_counts(d)
     osc_sig = d.get("oscillators_rating_signal") or rating_signal(d.get("oscillators_rating"))
     lines.append(f"Oscillator: <b>{osc_sig}</b> Buy: (<b>{osc_buy}</b>) Sell: (<b>{osc_sell}</b>)")
+
+    # ── K-line candlestick pattern (highest priority only)
+    for key, name, direction, desc in CANDLE_PATTERNS:
+        if d.get(key) == 1:
+            lines.append(f"K: {name} {direction} {desc}")
+            break
 
     # ── Fibonacci pivots (bold the one closer to price)
     fib_s1 = _safe(d.get("pivot_fib_s1"))

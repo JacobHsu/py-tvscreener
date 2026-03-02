@@ -176,3 +176,38 @@ def test_adx_aroon_none_no_crash():
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "ADX:" in msg
     assert "Aroon:" in msg
+
+# ── Candlestick pattern tests ──────────────────────────────
+
+def test_candle_hammer_shows():
+    """candle_hammer=1 → K: 行出現，含錘形"""
+    d = make_data(candle_hammer=1)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "K:" in msg
+    assert "錘形 ▲" in msg
+
+def test_candle_shooting_star_shows():
+    """candle_shooting_star=1 → K: 行出現，含射擊之星"""
+    d = make_data(candle_shooting_star=1)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "K:" in msg
+    assert "射擊之星 ▼" in msg
+
+def test_candle_none_hidden():
+    """全部 candle 欄位為 0/absent → 無 K: 行"""
+    d = make_data()  # BASE has no candle keys
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "K:" not in msg
+
+def test_candle_priority_takes_highest():
+    """多個 candle=1 → 取優先級最高的（三白兵 > 錘形）"""
+    d = make_data(candle_3white_soldiers=1, candle_hammer=1)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "三白兵" in msg
+    assert "錘形" not in msg
+
+def test_candle_minus_one_hidden():
+    """-1 值不觸發型態（只有 1 才觸發）"""
+    d = make_data(candle_hammer=-1)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "K:" not in msg
