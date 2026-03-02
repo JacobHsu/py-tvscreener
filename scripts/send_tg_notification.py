@@ -529,10 +529,9 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     minus_di = _safe(d.get("minus_di"))
     if adx is not None and adx >= 25:
         if plus_di is not None and minus_di is not None:
-            di_arrow = "▲" if plus_di > minus_di else "▼"
+            adx_label = "▲" if plus_di > minus_di else "▼"
         else:
-            di_arrow = ""
-        adx_label = f"(Trending {di_arrow})" if di_arrow else "(Trending)"
+            adx_label = ""
     else:
         adx_label = "(=)"
 

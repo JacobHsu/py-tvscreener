@@ -93,16 +93,16 @@ def test_price_none_no_bold():
 
 
 def test_adx_trending_bullish():
-    """+DI > -DI → (Trending ▲)"""
+    """+DI > -DI → ▲"""
     d = make_data(adx_14=30.0, plus_di=25.0, minus_di=15.0)
     msg = format_symbol_block(d, "🔶", "BTC", None)
-    assert "(Trending ▲)" in msg
+    assert "ADX: 30.0 ▲" in msg
 
 def test_adx_trending_bearish():
-    """+DI < -DI → (Trending ▼)"""
+    """+DI < -DI → ▼"""
     d = make_data(adx_14=30.0, plus_di=15.0, minus_di=25.0)
     msg = format_symbol_block(d, "🔶", "BTC", None)
-    assert "(Trending ▼)" in msg
+    assert "ADX: 30.0 ▼" in msg
 
 def test_adx_ranging():
     """adx < 25 → (=)"""
@@ -111,7 +111,8 @@ def test_adx_ranging():
     assert "(=)" in msg
 
 def test_adx_trending_di_none():
-    """+DI/-DI 為 None → (Trending) 不崩潰"""
+    """+DI/-DI 為 None → 不顯示箭頭，不崩潰"""
     d = make_data(adx_14=30.0, plus_di=None, minus_di=None)
     msg = format_symbol_block(d, "🔶", "BTC", None)
-    assert "(Trending)" in msg
+    assert "ADX:" in msg
+    assert "(Trending" not in msg
