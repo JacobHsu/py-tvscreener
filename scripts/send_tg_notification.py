@@ -541,11 +541,18 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         adx_bull = None
         adx_dir = "(=)"
 
-    # Aroon 方向
+    # Aroon 方向（▲ 顯示 Up 值，▼ 顯示 Down 值，(=) 顯示較高者）
     if aroon_up is not None and aroon_down is not None:
         aroon_bull = aroon_up > aroon_down
-        aroon_dir = "▲" if aroon_bull else "▼"
-        aroon_str = f"{fmt_num(aroon_up)}/{fmt_num(aroon_down)}"
+        if aroon_up > aroon_down:
+            aroon_dir = "▲"
+            aroon_str = fmt_num(aroon_up)
+        elif aroon_down > aroon_up:
+            aroon_dir = "▼"
+            aroon_str = fmt_num(aroon_down)
+        else:
+            aroon_dir = "(=)"
+            aroon_str = fmt_num(max(aroon_up, aroon_down))
     else:
         aroon_bull = None
         aroon_dir = ""

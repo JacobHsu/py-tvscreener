@@ -108,18 +108,20 @@ def test_adx_aroon_separate_line():
     assert "RSI:" not in adx_line
 
 def test_adx_aroon_aligned_bullish_bold():
-    """ADX ▲ 且 Aroon ▲ → 兩者粗體"""
+    """ADX ▲ 且 Aroon ▲ → 兩者粗體，顯示 Aroon Up 值"""
     d = make_data(adx_14=30.0, plus_di=25.0, minus_di=15.0, aroon_up=80.0, aroon_down=20.0)
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "ADX: <b>" in msg
-    assert "Aroon: <b>" in msg
+    assert "Aroon: <b>80" in msg
+    assert "Aroon: <b>20" not in msg
 
 def test_adx_aroon_aligned_bearish_bold():
-    """ADX ▼ 且 Aroon ▼ → 兩者粗體"""
+    """ADX ▼ 且 Aroon ▼ → 兩者粗體，顯示 Aroon Down 值"""
     d = make_data(adx_14=30.0, plus_di=15.0, minus_di=25.0, aroon_up=20.0, aroon_down=80.0)
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "ADX: <b>" in msg
-    assert "Aroon: <b>" in msg
+    assert "Aroon: <b>80" in msg
+    assert "Aroon: <b>20" not in msg
 
 def test_adx_aroon_diverge_no_bold():
     """ADX ▲ 但 Aroon ▼ → 不粗體"""
