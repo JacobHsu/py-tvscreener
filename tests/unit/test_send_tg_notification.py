@@ -15,10 +15,10 @@ BASE = {
     "pivot_fib_s1": 65000.0,
     "pivot_fib_r1": 70000.0,
     "rsi_14": 50.0,
-    "macd_macd": 100.0,
+    "macd_level": 100.0,
     "macd_signal": 90.0,
     "macd_hist": 10.0,
-    "adx": 25.0,
+    "adx_14": 25.0,
     "bb_lower": 65000.0,
     "donchian_lower": 64000.0,
     "atr_14": 800.0,
@@ -64,3 +64,29 @@ def test_vwma_none_no_bold():
     d = make_data(vwap=66000.0, vwma_20=None)
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "VWAP: $<b>" not in msg
+
+def test_mfi_extreme_low_bold():
+    """mfi < 20 → 粗體"""
+    d = make_data(vwap=None, vwma_20=None, mfi=15.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "<b>15.0</b>" in msg or "<b>15</b>" in msg
+
+def test_mfi_extreme_high_bold():
+    """mfi > 80 → 粗體"""
+    d = make_data(vwap=None, vwma_20=None, mfi=85.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "<b>85.0</b>" in msg or "<b>85</b>" in msg
+
+def test_mfi_normal_no_bold():
+    """mfi = 50 → 不粗體"""
+    d = make_data(vwap=None, vwma_20=None, mfi=50.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "MFI: <b>" not in msg
+
+def test_price_none_no_bold():
+    """price 為 None → 不加粗"""
+    d = make_data(price=None, vwap=66000.0, vwma_20=65000.0)
+    d["change_pct"] = None
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "VWAP: $<b>" not in msg
+    assert "VWMA: $<b>" not in msg

@@ -550,7 +550,12 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     # VWAP + VWMA 同向（同多或同空）才加粗
     vwap_bull = vwap is not None and price is not None and price > vwap
     vwma_bull = vwma is not None and price is not None and price > vwma
-    vol_aligned = (vwap is not None and vwma is not None) and (vwap_bull == vwma_bull)
+    vol_aligned = (
+        price is not None
+        and vwap is not None
+        and vwma is not None
+        and (vwap_bull == vwma_bull)
+    )
 
     vwap_display = f"<b>{fmt_price(vwap)}</b>" if vol_aligned else fmt_price(vwap)
     vwma_display = f"<b>{fmt_price(vwma)}</b>" if vol_aligned else fmt_price(vwma)
