@@ -570,7 +570,9 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     macd_str = f"{macd_hist:+.1f}" if macd_hist is not None else "—"
     macd_dir = _macd_arrow(macd_hist)
 
-    lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir}")
+    dc_lower = _safe(d.get("donchian_lower"))
+    dc_support = fmt_price(dc_lower * 0.98) if dc_lower is not None else "—"
+    lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | DC(S): <b>${dc_support}</b>")
 
     # ── ADX | Aroon（同向雙重確認才加粗）
     adx = _safe(d.get("adx_14"))

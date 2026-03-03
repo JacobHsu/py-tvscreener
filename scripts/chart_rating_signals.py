@@ -48,6 +48,7 @@ conn = sqlite3.connect(DB_PATH)
 df = pd.read_sql_query(
     """
     SELECT collected_at, open, high, low, price,
+           donchian_lower,
            technical_rating_signal,
            ma_rating_signal,
            oscillators_rating_signal
@@ -69,6 +70,19 @@ df["collected_at"] = (
     pd.to_datetime(df["collected_at"], utc=True)
     .dt.tz_convert("Asia/Taipei")
 )
+
+# ── 每日 4pm 台北時間快照（階梯支撐線）──────────────────
+def make_step_support(df, col, out_col):
+    snap = (
+        df[df["collected_at"].dt.hour == 16][["collected_at", col]]
+        .copy()
+        .rename(columns={col: out_col})
+        .dropna(subset=[out_col])
+    )
+    return pd.merge_asof(df.sort_values("collected_at"), snap, on="collected_at")
+
+df = make_step_support(df, "donchian_lower", "dc_support")
+df["dc_support"] = df["dc_support"] * 0.98
 
 # ── 圖表配置：1 price + 3 signal 子圖 ─────────────────
 fig = make_subplots(
@@ -95,6 +109,19 @@ fig.add_trace(
     ),
     row=1, col=1,
 )
+
+fig.add_trace(
+    go.Scatter(
+        x=df["collected_at"],
+        y=df["dc_support"],
+        mode="lines",
+        name="DC(S) -2% (4pm)",
+        line=dict(color="#ff9800", width=1.5, shape="hv", dash="dot"),
+        hovertemplate="DC(S): $%{y:,.0f}<br>%{x}<extra></extra>",
+    ),
+    row=1, col=1,
+)
+
 
 # Y 軸：右側，千位分隔符（對齊 TradingView）
 fig.update_yaxes(
