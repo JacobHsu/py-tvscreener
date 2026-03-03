@@ -108,6 +108,22 @@ def send_telegram_message(message: str) -> bool:
 # ============================================================
 # Database
 # ============================================================
+def _get_ma_streak(conn, symbol: str, current_signal: str) -> int:
+    """Count consecutive hours symbol has had the given ma_rating_signal."""
+    rows = conn.execute(
+        "SELECT ma_rating_signal FROM technical_indicators "
+        "WHERE symbol = ? ORDER BY collected_at DESC",
+        (symbol,),
+    ).fetchall()
+    count = 0
+    for (sig,) in rows:
+        if sig == current_signal:
+            count += 1
+        else:
+            break
+    return count
+
+
 def get_latest_data() -> dict:
     """Return latest BTC & ETH rows from SQLite as {symbol: dict}."""
     if not DB_PATH.exists():
@@ -136,6 +152,12 @@ def get_latest_data() -> dict:
     data = {}
     for r in cur.fetchall():
         data[r["symbol"]] = dict(r)
+
+    # Compute MA streak for each symbol
+    for symbol, d in data.items():
+        sig = d.get("ma_rating_signal")
+        d["ma_streak"] = _get_ma_streak(conn, symbol, sig) if sig else 1
+
     conn.close()
     return data
 
@@ -503,7 +525,14 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     # ── MA counts
     ma_buy, ma_sell = compute_ma_counts(d)
     ma_sig = d.get("ma_rating_signal") or rating_signal(d.get("ma_rating"))
-    ma_line = f"MA: <b>{ma_sig}</b> Buy: (<b>{ma_buy}</b>) Sell: (<b>{ma_sell}</b>)"
+    ma_streak = d.get("ma_streak", 1)
+    if ma_sig == "Strong Buy":
+        ma_sig_display = f"🔥 {ma_sig} ×{ma_streak}H"
+    elif ma_sig == "Strong Sell":
+        ma_sig_display = f"🔥 {ma_sig} ×{ma_streak}H"
+    else:
+        ma_sig_display = f"{ma_sig} ×{ma_streak}H"
+    ma_line = f"MA: <b>{ma_sig_display}</b> Buy: (<b>{ma_buy}</b>) Sell: (<b>{ma_sell}</b>)"
     if ma_sell > ma_buy:
         ma_line += " ✘"
     lines.append(ma_line)
@@ -641,7 +670,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     mfi_extreme = mfi is not None and (mfi < 20 or mfi > 80)
     mfi_display = f"<b>{mfi_str}</b>" if (money_aligned or mfi_extreme) else mfi_str
 
-    lines.append(f"Money: CMF: {cmf_display} {cmf_dir} | MFI: {mfi_display} {mfi_dir}")
+    lines.append(f"Money- CMF: {cmf_display} {cmf_dir} | MFI: {mfi_display} {mfi_dir}")
 
     # ── AI Prediction
     if pred:
