@@ -96,6 +96,54 @@ INTERVAL = "1D"    # Daily
 INTERVAL = "1W"    # Weekly
 ```
 
+---
+
+## send_tg_notification.py
+
+讀取 SQLite 歷史資料，呼叫 GitHub Models API（GPT-4.1）產生 AI 預測，格式化後透過 Telegram Bot 傳送通知。
+
+### 訊息格式說明
+
+| 欄位 | 說明 |
+|------|------|
+| `Tech` | TradingView 綜合技術評級 |
+| `MA: 🔥 Strong Buy ×NH` | MA 評級 + 連續持續小時數（Strong Buy/Sell 顯示 🔥） |
+| `Oscillator` | 震盪指標評級 + 個別 Buy/Sell 計數 |
+| `RSI \| MACD \| DC(S)` | RSI(14)、MACD Histogram、DC(S) 支撐位 |
+| `Band- BB \| KC \| ATR` | Bollinger Lower、Keltner Lower、ATR(14)（波動度通道帶） |
+| `Trend- ADX \| Aroon` | 趨勢強度與方向 |
+| `Volume- VWAP \| VWMA` | 成交量加權均價指標 |
+| `Money- CMF \| MFI` | 資金流向指標 |
+
+### 粗體規則
+
+| 欄位 | 粗體條件 |
+|------|---------|
+| RSI | RSI < 30 或 > 70（極端值） |
+| MA 評級 | 永遠粗體（含持續時數） |
+| ADX / Aroon | ADX 與 Aroon 方向一致（同向確認）或 ADX > 50 |
+| VWAP / VWMA | 兩者方向一致（同時高於或低於價格） |
+| CMF / MFI | 兩者方向一致 或 MFI < 20 / > 80 |
+| ATR | ATR / Price ≥ 1.5%（高波動） |
+| **BB / KC** | **Squeeze ON：BB 完全在 KC 內側時同時粗體**（壓縮蓄力中） |
+| DC(S) | 固定顯示，為 DC Lower × 0.98（−2% 支撐位） |
+
+### Squeeze 說明
+
+**Squeeze ON** = `BB Upper < KC Upper` 且 `BB Lower > KC Lower`
+
+Bollinger Bands 收縮進入 Keltner Channels 內側，代表波動度極低、行情蓄力，即將出現方向性突破。觸發時 BB 與 KC 數值同時以粗體顯示。參考：John Carter / LazyBear Squeeze Momentum。
+
+### DC(S) 支撐位說明
+
+`DC(S) = Donchian Lower(20) × 0.98`
+
+根據歷史回測（21 天）：
+- **DC Lower** 守住率 52%（BTC）/ 62%（ETH）
+- **DC(S) −2%** 守住率 **81%**（BTC/ETH 相同），且跌破時均為趨勢性下跌而非假跌破
+
+---
+
 ### GitHub Actions (Scheduled Run)
 
 ```yaml

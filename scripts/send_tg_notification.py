@@ -615,10 +615,24 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     adx_display = f"<b>{adx_str}</b>" if (aligned or adx_extreme) else adx_str
     aroon_display = f"<b>{aroon_str}</b>" if aligned else aroon_str
 
-    # ── BB | DC (bold) | ATR
+    # ── BB | KC | ATR
+    # Squeeze = BB 在 KC 內（Bollinger Bands inside Keltner Channels）
+    # Squeeze ON  → BB Upper < KC Upper AND BB Lower > KC Lower
+    # Squeeze OFF → 正常，不粗體
+    # 參考：John Carter / LazyBear Squeeze Momentum 指標
     bb_lower = _safe(d.get("bb_lower"))
-    dc_lower = _safe(d.get("donchian_lower"))
+    bb_upper = _safe(d.get("bb_upper"))
+    kc_lower = _safe(d.get("keltner_lower"))
+    kc_upper = _safe(d.get("keltner_upper"))
     atr = _safe(d.get("atr_14"))
+
+    squeeze = (
+        bb_lower is not None and bb_upper is not None
+        and kc_lower is not None and kc_upper is not None
+        and bb_lower > kc_lower and bb_upper < kc_upper
+    )
+    bb_display = f"<b>{fmt_price(bb_lower)}</b>" if squeeze else fmt_price(bb_lower)
+    kc_display = f"<b>{fmt_price(kc_lower)}</b>" if squeeze else fmt_price(kc_lower)
 
     atr_pct = (atr / price * 100) if atr and price else None
     atr_volatile = atr_pct is not None and atr_pct >= 1.5
@@ -626,7 +640,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     atr_display = f"<b>{fmt_num(atr)}</b>" if atr_volatile else fmt_num(atr)
 
     lines.append(
-        f"BB: ${fmt_price(bb_lower)} | DC: $<b>{fmt_price(dc_lower)}</b> | ATR: {atr_display} {atr_sym}"
+        f"Band- BB: ${bb_display} | KC: ${kc_display} | ATR: {atr_display} {atr_sym}"
     )
 
     lines.append(f"Trend- ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
