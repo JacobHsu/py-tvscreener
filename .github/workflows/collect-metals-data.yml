@@ -1,0 +1,46 @@
+name: Collect Metals Data
+
+on:
+  schedule:
+    - cron: '0 23 * * *'   # UTC 23:00 = 台北時間 07:00
+  workflow_dispatch:         # Manual trigger
+
+permissions:
+  contents: write
+  models: read
+
+jobs:
+  collect-metals:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Collect metals data
+        run: python scripts/collect_metals_to_db.py
+
+      - name: Send Telegram notification
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scripts/send_metals_notification.py
+
+      - name: Commit and push database
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/history.db
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "data: daily metals snapshot $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git pull --rebase
+          git push
