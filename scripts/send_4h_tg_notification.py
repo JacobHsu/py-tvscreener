@@ -498,6 +498,17 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     osc_sig = d.get("oscillators_rating_signal") or rating_signal(d.get("oscillators_rating"))
     lines.append(f"Oscillator: <b>{osc_sig}</b> Buy: (<b>{osc_buy}</b>) Sell: (<b>{osc_sell}</b>)")
 
+    # ── EMA20 | EMA50（離價格近的粗體）
+    ema20 = _safe(d.get("ema_20"))
+    ema50 = _safe(d.get("ema_50"))
+    if ema20 is not None and ema50 is not None and price is not None:
+        e20_str = f"{int(ema20):,}"
+        e50_str = f"{int(ema50):,}"
+        if abs(price - ema20) < abs(price - ema50):
+            lines.append(f"EMA: <b>{e20_str}</b> | {e50_str}")
+        else:
+            lines.append(f"EMA: {e20_str} | <b>{e50_str}</b>")
+
     fib_s1 = _safe(d.get("pivot_fib_s1"))
     fib_r1 = _safe(d.get("pivot_fib_r1"))
     if fib_s1 is not None and fib_r1 is not None:
