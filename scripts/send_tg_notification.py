@@ -546,12 +546,12 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     ema20 = _safe(d.get("ema_20"))
     ema50 = _safe(d.get("ema_50"))
     if ema20 is not None and ema50 is not None and price is not None:
-        e20_str = f"{int(ema20):,}"
-        e50_str = f"{int(ema50):,}"
+        e20_str = f"${fmt_price(ema20)}"
+        e50_str = f"${fmt_price(ema50)}"
         if abs(price - ema20) < abs(price - ema50):
-            lines.append(f"EMA: <b>{e20_str}</b> | {e50_str}")
+            lines.append(f"EMA: <b>20 {e20_str}</b> | 50 {e50_str}")
         else:
-            lines.append(f"EMA: {e20_str} | <b>{e50_str}</b>")
+            lines.append(f"EMA: 20 {e20_str} | <b>50 {e50_str}</b>")
 
     # ── K-line candlestick pattern (highest priority only)
     for key, name, direction, desc in CANDLE_PATTERNS:
@@ -621,10 +621,25 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         aroon_dir = ""
         aroon_str = "—"
 
-    # 同向確認 → 粗體
-    aligned = (adx_bull is not None and aroon_bull is not None and adx_bull == aroon_bull)
+    # SAR 方向（price > SAR → 多頭）
+    sar = _safe(d.get("parabolic_sar"))
+    if sar is not None and price is not None:
+        sar_bull = price > sar
+        sar_dir = "▲" if sar_bull else "▼"
+    else:
+        sar_bull = None
+        sar_dir = "—"
+
+    # 三向同向確認 → 粗體
+    aligned = (
+        adx_bull is not None
+        and aroon_bull is not None
+        and sar_bull is not None
+        and adx_bull == aroon_bull == sar_bull
+    )
     adx_display = f"<b>{adx_str}</b>" if (aligned or adx_extreme) else adx_str
     aroon_display = f"<b>{aroon_str}</b>" if aligned else aroon_str
+    sar_display = f"<b>{sar_dir}</b>" if aligned else sar_dir
 
     # ── BB | KC | ATR
     # Squeeze = BB 在 KC 內（Bollinger Bands inside Keltner Channels）
@@ -654,7 +669,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         f"Band- BB: ${bb_display} | KC: ${kc_display} | ATR: {atr_display} {atr_sym}"
     )
 
-    lines.append(f"Trend- ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir}")
+    lines.append(f"Trend- ADX: {adx_display} {adx_dir} | Aroon: {aroon_display} {aroon_dir} | SAR {sar_display}")
 
     # ── Volume: VWAP | VWMA（同向才加粗）
     vwap = _safe(d.get("vwap"))
