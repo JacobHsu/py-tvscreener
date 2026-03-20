@@ -540,7 +540,20 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     # ── Oscillator counts
     osc_buy, osc_sell = compute_osc_counts(d)
     osc_sig = d.get("oscillators_rating_signal") or rating_signal(d.get("oscillators_rating"))
-    lines.append(f"Oscillator: <b>{osc_sig}</b> Buy: (<b>{osc_buy}</b>) Sell: (<b>{osc_sell}</b>)")
+    bbp = _safe(d.get("bull_bear_power"))
+    bbp_ratio = (bbp / price * 100) if bbp is not None and price else None
+    if bbp_ratio is not None:
+        if bbp_ratio > 1.5:
+            bbp_emoji = "🦬"
+        elif bbp_ratio > 0:
+            bbp_emoji = "🐂"
+        elif bbp_ratio < -1.5:
+            bbp_emoji = "🐺"
+        else:
+            bbp_emoji = "🐻"
+    else:
+        bbp_emoji = ""
+    lines.append(f"Oscillator: <b>{osc_sig}</b> Buy: (<b>{osc_buy}</b>) Sell: (<b>{osc_sell}</b>) {bbp_emoji}")
 
     # ── EMA20 | EMA50（離價格近的粗體）
     ema20 = _safe(d.get("ema_20"))
