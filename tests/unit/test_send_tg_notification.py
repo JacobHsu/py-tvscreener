@@ -1,7 +1,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scripts'))
 
-from send_tg_notification import format_symbol_block
+from send_tg_notification import format_symbol_block, format_reversal_signal
 
 BASE = {
     "price": 67000.0,
@@ -211,3 +211,87 @@ def test_candle_minus_one_hidden():
     d = make_data(candle_hammer=-1)
     msg = format_symbol_block(d, "🔶", "BTC", None)
     assert "K:" not in msg
+
+
+# ── format_reversal_signal ──────────────────────────────────
+
+def test_no_signal_normal_conditions():
+    """Normal market — no signal line."""
+    d = make_data(mfi=50.0, rsi_14=50.0, cmf=0.05)
+    assert format_reversal_signal(d) == ""
+
+def test_no_signal_missing_indicator():
+    """Any required indicator None → no signal."""
+    assert format_reversal_signal(make_data(mfi=None, rsi_14=25.0, cmf=-0.1)) == ""
+    assert format_reversal_signal(make_data(mfi=15.0, rsi_14=None, cmf=-0.1)) == ""
+    assert format_reversal_signal(make_data(mfi=15.0, rsi_14=25.0, cmf=None)) == ""
+
+def test_bullish_trigger_waiting():
+    """MFI<20 & RSI<30 & CMF<0 → waiting for CMF."""
+    d = make_data(mfi=16.0, rsi_14=23.0, cmf=-0.17, macd_hist=-132.0)
+    result = format_reversal_signal(d)
+    assert result == "🎯📈: CMF轉正待確認 (MFI ✓ RSI ✓)"
+
+def test_bullish_trigger_waiting_with_macd():
+    """MFI<20 & RSI<30 & CMF<0 but MACD>0 → show MACD check too."""
+    d = make_data(mfi=16.0, rsi_14=23.0, cmf=-0.03, macd_hist=23.0)
+    result = format_reversal_signal(d)
+    assert result == "🎯📈: CMF轉正待確認 (MFI ✓ RSI ✓ MACD ✓)"
+
+def test_bullish_complete():
+    """MFI<20 & RSI<30 & CMF>0 → signal complete."""
+    d = make_data(mfi=16.0, rsi_14=23.0, cmf=0.056, macd_hist=16.7)
+    result = format_reversal_signal(d)
+    assert result == "🎯📈: CMF已翻正 ✅ (MFI ✓ RSI ✓ MACD ✓)"
+
+def test_bearish_trigger_waiting():
+    """MFI>80 & RSI>70 & CMF>0 → waiting for CMF."""
+    d = make_data(mfi=88.0, rsi_14=73.0, cmf=0.30, macd_hist=200.0)
+    result = format_reversal_signal(d)
+    assert result == "🎯📉: CMF轉負待確認 (MFI ✓ RSI ✓)"
+
+def test_bearish_trigger_waiting_with_macd():
+    """MFI>80 & RSI>70 & CMF>0 but MACD<0 → show MACD check too."""
+    d = make_data(mfi=88.0, rsi_14=73.0, cmf=0.05, macd_hist=-10.0)
+    result = format_reversal_signal(d)
+    assert result == "🎯📉: CMF轉負待確認 (MFI ✓ RSI ✓ MACD ✓)"
+
+def test_bearish_complete():
+    """MFI>80 & RSI>70 & CMF<0 → signal complete."""
+    d = make_data(mfi=88.0, rsi_14=73.0, cmf=-0.05, macd_hist=-50.0)
+    result = format_reversal_signal(d)
+    assert result == "🎯📉: CMF已翻負 ✅ (MFI ✓ RSI ✓ MACD ✓)"
+
+def test_mfi_20_boundary_not_triggered():
+    """MFI exactly 20 → not triggered (condition is < 20)."""
+    d = make_data(mfi=20.0, rsi_14=28.0, cmf=-0.1)
+    assert format_reversal_signal(d) == ""
+
+def test_rsi_30_boundary_not_triggered():
+    """RSI exactly 30 → not triggered (condition is < 30)."""
+    d = make_data(mfi=15.0, rsi_14=30.0, cmf=-0.1)
+    assert format_reversal_signal(d) == ""
+
+def test_macd_none_no_macd_check():
+    """MACD_H is None → no MACD ✓ in output."""
+    d = make_data(mfi=16.0, rsi_14=23.0, cmf=-0.1, macd_hist=None)
+    result = format_reversal_signal(d)
+    assert "MACD" not in result
+    assert result == "🎯📈: CMF轉正待確認 (MFI ✓ RSI ✓)"
+
+def test_no_signal_between_trigger_and_clear_thresholds():
+    """MFI=22 is above trigger (20) — stateless impl uses trigger threshold only."""
+    d = make_data(mfi=22.0, rsi_14=28.0, cmf=-0.1)
+    assert format_reversal_signal(d) == ""
+
+def test_reversal_line_appears_in_symbol_block():
+    """Reversal signal line appears in full symbol block when triggered."""
+    d = make_data(mfi=16.0, rsi_14=23.0, cmf=-0.17, macd_hist=-132.0)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "🎯📈: CMF轉正待確認" in msg
+
+def test_no_reversal_line_in_symbol_block_normal():
+    """No reversal line in symbol block under normal conditions."""
+    d = make_data(mfi=50.0, rsi_14=50.0, cmf=0.05)
+    msg = format_symbol_block(d, "🔶", "BTC", None)
+    assert "🎯" not in msg

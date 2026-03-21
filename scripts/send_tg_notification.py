@@ -499,6 +499,45 @@ def _macd_arrow(hist):
     return "▲" if hist > 0 else "▼" if hist < 0 else "▬"
 
 
+def format_reversal_signal(d: dict) -> str:
+    """Return reversal signal line, or '' if no signal active.
+
+    Bullish (空轉多): MFI < 20 AND RSI < 30 → monitor; CMF > 0 → complete
+    Bearish (多轉空): MFI > 80 AND RSI > 70 → monitor; CMF < 0 → complete
+    MACD_H shown as bonus confirmation when aligned; not required.
+    Any required indicator (MFI, RSI, CMF) missing → no signal.
+    """
+    mfi = _safe(d.get("mfi"))
+    rsi = _safe(d.get("rsi_14"))
+    cmf = _safe(d.get("cmf"))
+    macd_h = _safe(d.get("macd_hist"))
+
+    if any(v is None for v in [mfi, rsi, cmf]):
+        return ""
+
+    # ── Bullish reversal (空轉多)
+    if mfi < 20 and rsi < 30:
+        checks = ["MFI ✓", "RSI ✓"]
+        if macd_h is not None and macd_h > 0:
+            checks.append("MACD ✓")
+        checks_str = " ".join(checks)
+        if cmf > 0:
+            return f"🎯📈: CMF已翻正 ✅ ({checks_str})"
+        return f"🎯📈: CMF轉正待確認 ({checks_str})"
+
+    # ── Bearish reversal (多轉空)
+    if mfi > 80 and rsi > 70:
+        checks = ["MFI ✓", "RSI ✓"]
+        if macd_h is not None and macd_h < 0:
+            checks.append("MACD ✓")
+        checks_str = " ".join(checks)
+        if cmf < 0:
+            return f"🎯📉: CMF已翻負 ✅ ({checks_str})"
+        return f"🎯📉: CMF轉負待確認 ({checks_str})"
+
+    return ""
+
+
 def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | None) -> str:
     """Format one symbol's notification block (HTML)."""
     price = _safe(d.get("price"))
@@ -741,6 +780,11 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
             f'🗣️ 1H: {pred_emoji} <b>{pred["prediction"]} {pred["style"]}</b>'
         )
         lines.append(f'{bull_bear}: {pred["reason"]}')
+
+    # ── Reversal signal (空轉多 / 多轉空)
+    reversal = format_reversal_signal(d)
+    if reversal:
+        lines.append(reversal)
 
     return "\n".join(lines)
 
