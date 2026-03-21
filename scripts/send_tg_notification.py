@@ -725,7 +725,13 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     mfi_extreme = mfi is not None and (mfi < 20 or mfi > 80)
     mfi_display = f"<b>{mfi_str}</b>" if (money_aligned or mfi_extreme) else mfi_str
 
-    lines.append(f"Money- CMF: {cmf_display} {cmf_dir} | MFI: {mfi_display} {mfi_dir}")
+    cci = _safe(d.get("cci_20"))
+    cci_str = fmt_num(cci)
+    cci_dir = "▲" if (cci is not None and cci > 0) else "▼" if cci is not None else ""
+    cci_extreme = cci is not None and (cci < -100 or cci > 100)
+    cci_display = f"<b>{cci_str}</b>" if cci_extreme else cci_str
+
+    lines.append(f"Money- CCI: {cci_display} {cci_dir} | CMF: {cmf_display} {cmf_dir} | MFI: {mfi_display} {mfi_dir}")
 
     # ── AI Prediction
     if pred:
