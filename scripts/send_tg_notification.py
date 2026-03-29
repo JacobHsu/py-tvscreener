@@ -538,6 +538,19 @@ def format_reversal_signal(d: dict) -> str:
     return ""
 
 
+FIB_ENTRY_OFFSET = {"BTC": 300, "ETH": 30}
+
+
+def _fib_entry_signal(d: dict, symbol_short: str) -> str:
+    """Return '1️⃣' if price >= S1 + offset (3:1 long entry zone), else ''."""
+    price = _safe(d.get("price"))
+    s1 = _safe(d.get("pivot_fib_s1"))
+    offset = FIB_ENTRY_OFFSET.get(symbol_short)
+    if price is None or s1 is None or offset is None:
+        return ""
+    return "1️⃣" if price >= s1 + offset else ""
+
+
 def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | None) -> str:
     """Format one symbol's notification block (HTML)."""
     price = _safe(d.get("price"))
@@ -554,7 +567,8 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         change_str = "—"
         pct_str = "—"
 
-    lines.append(f"【 {emoji} <b>{symbol_short}</b> ${price_str} {change_str} ({pct_str}) 】")
+    entry_signal = _fib_entry_signal(d, symbol_short)
+    lines.append(f"【 {emoji} <b>{symbol_short}</b> ${price_str} {change_str} ({pct_str}) 】{entry_signal}")
     lines.append("")
 
     # ── Technical rating
