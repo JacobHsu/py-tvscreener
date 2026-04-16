@@ -608,16 +608,28 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         bbp_emoji = ""
     lines.append(f"Oscillator: <b>{osc_sig}</b> Buy: (<b>{osc_buy}</b>) Sell: (<b>{osc_sell}</b>) {bbp_emoji}")
 
-    # ── EMA20 | EMA50（離價格近的粗體）
-    ema20 = _safe(d.get("ema_20"))
-    ema50 = _safe(d.get("ema_50"))
-    if ema20 is not None and ema50 is not None and price is not None:
-        e20_str = f"${fmt_price(ema20)}"
-        e50_str = f"${fmt_price(ema50)}"
-        if abs(price - ema20) < abs(price - ema50):
-            lines.append(f"EMA: <b>20 {e20_str}</b> | 50 {e50_str}")
-        else:
-            lines.append(f"EMA: 20 {e20_str} | <b>50 {e50_str}</b>")
+    # ── EMA20 | EMA50 | EMA100 | EMA200（離價格近的粗體）
+    ema_vals = {
+        20:  _safe(d.get("ema_20")),
+        50:  _safe(d.get("ema_50")),
+        100: _safe(d.get("ema_100")),
+        200: _safe(d.get("ema_200")),
+    }
+    if price is not None and any(v is not None for v in ema_vals.values()):
+        closest = min(
+            (period for period, v in ema_vals.items() if v is not None),
+            key=lambda p: abs(price - ema_vals[p]),
+        )
+        parts = []
+        for period, val in ema_vals.items():
+            if val is None:
+                continue
+            segment = f"{period} ${fmt_price(val)}"
+            if period == closest:
+                parts.append(f"<b>{segment}</b>")
+            else:
+                parts.append(segment)
+        lines.append("EMA: " + " | ".join(parts))
 
     # ── K-line candlestick pattern (highest priority only)
     for key, name, direction, desc in CANDLE_PATTERNS:
