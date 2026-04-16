@@ -462,6 +462,41 @@ def _macd_arrow(hist):
     return "▲" if hist > 0 else "▼" if hist < 0 else "▬"
 
 
+def _signal_emoji(d: dict, price: float | None) -> str:
+    """🟢 做多 / 🔴 做空：ADX > 20 為前提，其他 4 個方向條件達到 3 個以上才顯示。"""
+    if price is None:
+        return ""
+    adx = _safe(d.get("adx_14"))
+    if adx is None or adx <= 20:
+        return ""
+
+    kc_upper = _safe(d.get("keltner_upper"))
+    kc_lower = _safe(d.get("keltner_lower"))
+    vwap    = _safe(d.get("vwap"))
+    vwma    = _safe(d.get("vwma_20"))
+    ema200  = _safe(d.get("ema_200"))
+    rsi     = _safe(d.get("rsi_14"))
+
+    bull = [
+        kc_upper is not None and price > kc_upper,
+        vwap is not None and vwma is not None and price > vwap and price > vwma,
+        ema200 is not None and price > ema200,
+        rsi is not None and rsi > 50,
+    ]
+    bear = [
+        kc_lower is not None and price < kc_lower,
+        vwap is not None and vwma is not None and price < vwap and price < vwma,
+        ema200 is not None and price < ema200,
+        rsi is not None and rsi < 50,
+    ]
+
+    if sum(bull) >= 3:
+        return "🟢"
+    if sum(bear) >= 3:
+        return "🔴"
+    return ""
+
+
 def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | None) -> str:
     price = _safe(d.get("price"))
     change_pct = _safe(d.get("change_pct"))
@@ -476,7 +511,9 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
         change_str = "—"
         pct_str = "—"
 
-    lines.append(f"【 {emoji} <b>{symbol_short}</b> ${price_str} {change_str} ({pct_str}) 】")
+    signal = _signal_emoji(d, price)
+    signal_str = f" {signal}" if signal else ""
+    lines.append(f"【 {emoji} <b>{symbol_short}</b> ${price_str}{signal_str} {change_str} ({pct_str}) 】")
     lines.append("")
 
     overall = d.get("technical_rating_signal") or rating_signal(d.get("technical_rating"))
