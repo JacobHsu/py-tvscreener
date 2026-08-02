@@ -105,5 +105,6 @@ nav:
     - Fields: api/fields.md
     - Filters: api/filters.md
     - Enums: api/enums.md
+  - 交易策略: trading-strategies.md
   - 復盤機制: review-mechanism.md
   - Changelog: changelog.md

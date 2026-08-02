@@ -25,6 +25,11 @@ import requests
 # ============================================================
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "history.db"
 
+# DC(S) stop-loss support = Donchian Lower x this multiplier.
+# Backtested on 1H BTC/ETH (6mo): 0.97 keeps intraday-hold >=90% for BOTH
+# assets (ETH needs 0.97; 0.98 only reaches 85%). See docs/review-mechanism.md.
+DC_SUPPORT_MULT = 0.97
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -697,7 +702,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     macd_dir = _macd_arrow(macd_hist)
 
     dc_lower = _safe(d.get("donchian_lower"))
-    dc_support = fmt_price(dc_lower * 0.98) if dc_lower is not None else "—"
+    dc_support = fmt_price(dc_lower * DC_SUPPORT_MULT) if dc_lower is not None else "—"
     lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | DC(S): <b>${dc_support}</b>")
 
     # ── ADX | Aroon（同向雙重確認才加粗）

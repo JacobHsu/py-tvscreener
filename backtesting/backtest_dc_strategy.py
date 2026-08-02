@@ -20,9 +20,10 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 TIMEZONE_OFFSET = 8  # Hours
 
 # Buffer multiplier applied to DC Lower to form the shipped support line DC(S).
-# The notification/chart ship DC(S) = DC Lower * 0.98 (-2%), so backtest the
-# same value here to keep "what we test" == "what we ship".
-BUFFER_MULT = 0.98
+# The 1H crypto notification/chart ship DC(S) = DC Lower * 0.97 (-3%), so
+# backtest the same value here to keep "what we test" == "what we ship".
+# (Metals ship 0.98 — different asset volatility; see docs/review-mechanism.md.)
+BUFFER_MULT = 0.97
 
 # Strategy settings
 STRATEGY_NAME = f"DC(S) Support Validation (Close) — DC Lower x {BUFFER_MULT}"

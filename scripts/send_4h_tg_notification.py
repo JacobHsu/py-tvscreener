@@ -26,6 +26,11 @@ import requests
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "history.db"
 TABLE = "technical_indicators_4h"
 
+# DC(S) stop-loss support = Donchian Lower x this multiplier.
+# Backtested on 4H BTC/ETH (6mo): 0.97 gives 96-97% intraday-hold; unified with
+# the 1H crypto buffer for consistency. See docs/review-mechanism.md.
+DC_SUPPORT_MULT = 0.97
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -579,7 +584,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     macd_dir = _macd_arrow(macd_hist)
 
     dc_lower = _safe(d.get("donchian_lower"))
-    dc_support = fmt_price(dc_lower * 0.98) if dc_lower is not None else "—"
+    dc_support = fmt_price(dc_lower * DC_SUPPORT_MULT) if dc_lower is not None else "—"
     lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | DC(S): <b>${dc_support}</b>")
 
     adx = _safe(d.get("adx_14"))

@@ -81,8 +81,11 @@ def make_step_support(df, col, out_col):
     )
     return pd.merge_asof(df.sort_values("collected_at"), snap, on="collected_at")
 
+# DC(S) stop-loss support = Donchian Lower x 0.97 (backtested, see
+# docs/review-mechanism.md). Crypto uses 0.97; metals stay 0.98.
+DC_SUPPORT_MULT = 0.97
 df = make_step_support(df, "donchian_lower", "dc_support")
-df["dc_support"] = df["dc_support"] * 0.98
+df["dc_support"] = df["dc_support"] * DC_SUPPORT_MULT
 
 # ── 圖表配置：1 price + 3 signal 子圖 ─────────────────
 fig = make_subplots(
@@ -115,7 +118,7 @@ fig.add_trace(
         x=df["collected_at"],
         y=df["dc_support"],
         mode="lines",
-        name="DC(S) -2% (4pm)",
+        name="DC(S) -3% (4pm)",
         line=dict(color="#ff9800", width=1.5, shape="hv", dash="dot"),
         hovertemplate="DC(S): $%{y:,.0f}<br>%{x}<extra></extra>",
     ),

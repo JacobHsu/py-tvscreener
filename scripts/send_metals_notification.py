@@ -25,6 +25,12 @@ import requests
 # ============================================================
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "history.db"
 
+# DC(S) stop-loss support = Donchian Lower x this multiplier.
+# Metals stay at 0.98 (NOT 0.97 like crypto): backtested on daily GOLD/SILVER
+# (6mo), raw DC Lower already holds intraday 92-93%, so a deeper buffer would
+# push support pointlessly far from price. See docs/review-mechanism.md.
+DC_SUPPORT_MULT = 0.98
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -571,7 +577,7 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
     macd_dir = _macd_arrow(macd_hist)
 
     dc_lower = _safe(d.get("donchian_lower"))
-    dc_support = fmt_price(dc_lower * 0.98) if dc_lower is not None else "—"
+    dc_support = fmt_price(dc_lower * DC_SUPPORT_MULT) if dc_lower is not None else "—"
     lines.append(f"RSI: {rsi_display} | MACD: {macd_str} {macd_dir} | DC(S): <b>${dc_support}</b>")
 
     # ── ADX | Aroon（同向雙重確認才加粗）
