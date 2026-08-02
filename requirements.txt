@@ -5,3 +5,7 @@ requests>=2.27.1
 
 # Development dependencies
 # To install with dev dependencies, use: pip install -e ".[dev]"
+
+# Charting for scripts/chart_rating_signals.py (optional)
+# To install: pip install -e ".[scripts]"
+plotly>=5.0.0

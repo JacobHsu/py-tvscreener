@@ -651,7 +651,8 @@ Money: CMF: +0.12 ▲ | MFI: 59.6 ▲            ← 同向粗體
 
 ```bash
 # BTC（預設）
-python scripts/chart_rating_signals.py
+python scripts/chart_rating_signals.py  
+py -3.12 scripts/chart_rating_signals.py  
 
 # ETH
 python scripts/chart_rating_signals.py ETHUSDT

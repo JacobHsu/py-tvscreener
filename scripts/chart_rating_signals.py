@@ -216,7 +216,7 @@ tv_widget = f"""
       "hide_top_toolbar": false,
       "hide_legend": false,
       "save_image": false,
-      "studies": ["STD;MA%Ribbon", "STD;Supertrend", "STD;VWMA"],
+      "studies": ["STD;Bollinger_Bands", "STD;Keltner_Channels"],
       "container_id": "tradingview_chart"
     }});
     </script>

@@ -848,6 +848,8 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
             f'🗣️ 1H: {pred_emoji} <b>{pred["prediction"]} {pred["style"]}</b>'
         )
         lines.append(f'{bull_bear}: {pred["reason"]}')
+    else:
+        lines.append("🗣️ 1H: ⚪ AI 預測暫不可用")
 
     # ── Reversal signal (空轉多 / 多轉空)
     reversal = format_reversal_signal(d)

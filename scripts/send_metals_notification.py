@@ -702,6 +702,8 @@ def format_symbol_block(d: dict, emoji: str, symbol_short: str, pred: dict | Non
             f'🗣️ Daily: {pred_emoji} <b>{pred["prediction"]} {pred["style"]}</b>'
         )
         lines.append(f'{bull_bear}: {pred["reason"]}')
+    else:
+        lines.append("🗣️ Daily: ⚪ AI 預測暫不可用")
 
     return "\n".join(lines)
 
