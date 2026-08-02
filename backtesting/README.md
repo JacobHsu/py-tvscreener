@@ -28,4 +28,5 @@ This directory contains scripts for backtesting technical indicators against his
   ```
 
 ## Strategy Documentation
-See `.agent/strategies/dc_backtest.md` for detailed rules and findings.
+See [`docs/review-mechanism.md`](../docs/review-mechanism.md) for the full review/backtest
+mechanism, strategy rules, and latest findings.

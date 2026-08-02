@@ -4,6 +4,12 @@ from datetime import timedelta, datetime
 import os
 import sys
 
+# Ensure UTF-8 stdout so emoji don't crash on Windows cp950
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # ============================================================
 # Configuration
 # ============================================================
@@ -13,8 +19,13 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 # Timezone settings: UTC database time to Taiwan Local Time
 TIMEZONE_OFFSET = 8  # Hours
 
+# Buffer multiplier applied to DC Lower to form the shipped support line DC(S).
+# The notification/chart ship DC(S) = DC Lower * 0.98 (-2%), so backtest the
+# same value here to keep "what we test" == "what we ship".
+BUFFER_MULT = 0.98
+
 # Strategy settings
-STRATEGY_NAME = "DC Lower Support Validation (Close)"
+STRATEGY_NAME = f"DC(S) Support Validation (Close) — DC Lower x {BUFFER_MULT}"
 SYMBOLS = ['BINANCE:BTCUSDT', 'BINANCE:ETHUSDT']
 START_HOUR_TW = 16  # 4 PM Taiwan Time
 START_HOUR_UTC = (START_HOUR_TW - TIMEZONE_OFFSET) % 24  # 08:00 UTC
@@ -72,7 +83,7 @@ def run_backtest():
     
     print("\n" + "="*80)
     print(f"RUNNING BACKTEST: {STRATEGY_NAME}")
-    print(f"Rule: IF (Close Price at Next Day 16:00 TW) >= (DC Lower at Start Day 16:00 TW) -> PASS")
+    print(f"Rule: IF (Close Price at Next Day 16:00 TW) >= (DC Lower x {BUFFER_MULT} at Start Day 16:00 TW) -> PASS")
     print("="*80 + "\n")
 
     for symbol in SYMBOLS:
@@ -101,7 +112,7 @@ def run_backtest():
                 # Gap in data, skip
                 continue
                 
-            dc_lower_start = start_rec['donchian_lower']
+            dc_lower_start = start_rec['donchian_lower'] * BUFFER_MULT
             final_price = end_rec['price']
             
             # The Logic
@@ -133,7 +144,7 @@ def run_backtest():
         # And make sure we haven't already processed this as a full session above
         # (Though logic above relies on next 16:00 existing, so this covers the 'incomplete' one)
         if current_time < (last_start_time + timedelta(hours=24)) and current_time > last_start_time:
-             dc_lower_start = last_start_rec['donchian_lower']
+             dc_lower_start = last_start_rec['donchian_lower'] * BUFFER_MULT
              current_price = current_rec['price']
              
              is_fail = current_price < dc_lower_start

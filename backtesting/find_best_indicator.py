@@ -1,9 +1,20 @@
+import os
+import sys
 import sqlite3
 import pandas as pd
 from datetime import timedelta
 
+# Ensure UTF-8 stdout so emoji/box-drawing chars don't crash on Windows cp950
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # Configuration
-DB_PATH = r'c:\github\tg\py-tvscreener\data\history.db'
+# Resolve DB relative to this script so it works in CI / any machine
+DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "history.db"
+)
 TIMEZONE_OFFSET = 8  # Hours
 START_HOUR_TW = 16
 SYMBOLS = ['BINANCE:BTCUSDT', 'BINANCE:ETHUSDT']
