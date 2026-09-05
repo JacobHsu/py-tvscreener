@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  models: read
 
 jobs:
   collect:
@@ -30,7 +29,7 @@ jobs:
 
       - name: Send Telegram notification
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/send_tg_notification.py

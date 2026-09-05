@@ -2,7 +2,7 @@
 Send TradingView 4H BTC/ETH technical notification to Telegram.
 
 Reads the latest data from SQLite (written by collect_4h_to_db.py),
-calls GitHub Models API for AI prediction, formats an HTML message,
+calls NVIDIA NIM API for AI prediction, formats an HTML message,
 and sends it via the Telegram Bot API.
 
 Usage:
@@ -40,8 +40,8 @@ log = logging.getLogger(__name__)
 
 TAIPEI_TZ = timezone(timedelta(hours=8))
 
-GITHUB_MODELS_URL = "https://models.github.ai/inference/chat/completions"
-GITHUB_MODELS_MODEL = "openai/gpt-4.1"
+NVIDIA_NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+NVIDIA_NIM_MODEL = "nvidia/nemotron-3-super-120b-a12b"
 
 
 # ============================================================
@@ -308,7 +308,7 @@ def compute_osc_counts(d: dict):
 
 
 # ============================================================
-# AI Prediction (GitHub Models API)
+# AI Prediction (NVIDIA NIM API)
 # ============================================================
 STYLE_GUIDE = """Movement style rules (choose exactly one):
 - 單邊上漲: Strong uptrend, most indicators bullish, price breaking resistance
@@ -316,11 +316,15 @@ STYLE_GUIDE = """Movement style rules (choose exactly one):
 - 震盪偏空: Oscillating with bearish bias, mixed signals but leaning down
 - 單邊下跌: Strong downtrend, most indicators bearish, price breaking support"""
 
-REASON_GUIDELINES = """REASON guidelines (Traditional Chinese, max 50 chars):
-- Must include specific indicator values (e.g. RSI 34, MACD -280, CCI -210)
-- Must include key price levels (MA20, S1, R1, BB, DC)
-- Must describe technical structure (跌破MA20, MACD死叉, 超賣反彈)
-- Be concise and data-driven, no vague descriptions"""
+REASON_MAX_CHARS = 60  # safety cap enforced in code; prompt asks for 50
+
+REASON_GUIDELINES = """REASON guidelines — write ONE short Traditional Chinese sentence, STRICT max 50 characters:
+- Pick only the 2-3 MOST decisive signals — do NOT list every indicator, do NOT dump the raw data
+- For any directional claim (price vs MA, MACD cross direction), the direction MUST match the
+  "Derived Signals" section — it is pre-computed and correct. Do NOT recompute or guess it yourself.
+- No English words, no bullet lists, no line breaks — a single flowing Chinese sentence only
+- Example good REASON: "RSI 46 中性，MACD 金叉，站上 SMA20，短線偏多"
+- Count characters before answering; if over 50, cut it down"""
 
 
 def build_technical_summary(symbol: str, d: dict) -> str:
@@ -373,14 +377,47 @@ def build_technical_summary(symbol: str, d: dict) -> str:
     lines.append(f"  VWAP: {fmt_price(d.get('vwap'))}")
     lines.append(f"  MFI: {fmt_num(d.get('mfi'))}")
 
+    lines.append("\nDerived Signals (pre-computed, use these — do not recompute from raw numbers):")
+    lines.append(f"  Price vs EMA20: {_cmp(d.get('price'), d.get('ema_20'))}")
+    lines.append(f"  Price vs EMA50: {_cmp(d.get('price'), d.get('ema_50'))}")
+    lines.append(f"  Price vs SMA20: {_cmp(d.get('price'), d.get('sma_20'))}")
+    lines.append(f"  Price vs SMA50: {_cmp(d.get('price'), d.get('sma_50'))}")
+    lines.append(f"  Price vs VWAP: {_cmp(d.get('price'), d.get('vwap'))}")
+    lines.append(f"  MACD Cross: {_macd_cross(d.get('macd_hist'))}")
+    lines.append(f"  Stochastic Cross: {_cmp(d.get('stoch_k'), d.get('stoch_d'), labels=('%K above %D (bullish)', '%K below %D (bearish)'))}")
+
     return "\n".join(lines)
 
 
+def _cmp(a, b, labels=("Above", "Below")) -> str:
+    """Compare two values and return a directional label, or '—' if either is missing/equal."""
+    a, b = _safe(a), _safe(b)
+    if a is None or b is None:
+        return "—"
+    if a > b:
+        return labels[0]
+    if a < b:
+        return labels[1]
+    return "Equal"
+
+
+def _macd_cross(hist) -> str:
+    """MACD histogram sign → cross direction label."""
+    hist = _safe(hist)
+    if hist is None:
+        return "—"
+    if hist > 0:
+        return "Golden Cross (bullish, MACD line above signal)"
+    if hist < 0:
+        return "Death Cross (bearish, MACD line below signal)"
+    return "Flat"
+
+
 def predict_with_ai(symbol_short: str, d: dict) -> dict | None:
-    """Call GitHub Models API (GPT-4.1) for 4H prediction."""
-    github_token = os.getenv("GITHUB_TOKEN")
-    if not github_token:
-        log.warning("GITHUB_TOKEN not set — skipping AI prediction")
+    """Call NVIDIA NIM API (Llama 3.3 70B) for 4H prediction."""
+    nvidia_api_key = os.getenv("NVIDIA_API_KEY")
+    if not nvidia_api_key:
+        log.warning("NVIDIA_API_KEY not set — skipping AI prediction")
         return None
 
     technical_summary = build_technical_summary(symbol_short, d)
@@ -398,11 +435,11 @@ def predict_with_ai(symbol_short: str, d: dict) -> dict | None:
     )
 
     headers = {
-        "Authorization": f"Bearer {github_token}",
+        "Authorization": f"Bearer {nvidia_api_key}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": GITHUB_MODELS_MODEL,
+        "model": NVIDIA_NIM_MODEL,
         "messages": [
             {
                 "role": "system",
@@ -412,14 +449,15 @@ def predict_with_ai(symbol_short: str, d: dict) -> dict | None:
         ],
         "max_tokens": 200,
         "temperature": 0.3,
+        "chat_template_kwargs": {"thinking": False},
     }
 
     try:
         resp = requests.post(
-            GITHUB_MODELS_URL, headers=headers, json=payload, timeout=30
+            NVIDIA_NIM_URL, headers=headers, json=payload, timeout=30
         )
         if resp.status_code != 200:
-            log.error("GitHub Models API error: %d %s", resp.status_code, resp.text)
+            log.error("NVIDIA NIM API error: %d %s", resp.status_code, resp.text)
             return None
 
         content = resp.json()["choices"][0]["message"]["content"]
@@ -454,7 +492,11 @@ def parse_prediction(content: str) -> dict | None:
     if style not in valid_styles:
         style = "震盪偏多" if prediction == "Up" else "震盪偏空"
 
-    return {"prediction": prediction, "style": style, "reason": reason or "—"}
+    reason = reason or "—"
+    if len(reason) > REASON_MAX_CHARS:
+        reason = reason[:REASON_MAX_CHARS - 1].rstrip() + "…"
+
+    return {"prediction": prediction, "style": style, "reason": reason}
 
 
 # ============================================================
