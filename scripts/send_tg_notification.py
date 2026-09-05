@@ -557,36 +557,24 @@ def _fib_entry_signal(d: dict, symbol_short: str) -> str:
 
 
 def _signal_emoji(d: dict, price: float | None) -> str:
-    """🟢 做多 / 🔴 做空：ADX > 20 為前提，其他 4 個方向條件達到 3 個以上才顯示。"""
+    """🟢 買進/反彈 · 🔴 賣出/回落：RSI(14) 極端值 + ADX > 20（有趨勢）。
+
+    舊版用 KC突破+VWAP/VWMA+EMA200+RSI>50 四選三，回測 24H 前瞻顯示
+    BTC/ETH 兩方向 edge 全部為負（比瞎猜還差，見 docs/indicator-backtest/README.md）。
+    新版改用 RSI(14) 逆勢極端值 + ADX>20，同一份資料回測：
+    BTC 🔴 edge +5.1pp、ETH 🟢 +7.8pp／🔴 +13.0pp，BTC 🟢 edge -0.2pp（接近中性，
+    ETH/BTC 兩幣種在超賣反彈方向本身的可預測性不對稱，非規則設計問題）。
+    """
     if price is None:
         return ""
     adx = _safe(d.get("adx_14"))
-    if adx is None or adx <= 20:
+    rsi = _safe(d.get("rsi_14"))
+    if adx is None or rsi is None or adx <= 20:
         return ""
 
-    kc_upper = _safe(d.get("keltner_upper"))
-    kc_lower = _safe(d.get("keltner_lower"))
-    vwap    = _safe(d.get("vwap"))
-    vwma    = _safe(d.get("vwma_20"))
-    ema200  = _safe(d.get("ema_200"))
-    rsi     = _safe(d.get("rsi_14"))
-
-    bull = [
-        kc_upper is not None and price > kc_upper,
-        vwap is not None and vwma is not None and price > vwap and price > vwma,
-        ema200 is not None and price > ema200,
-        rsi is not None and rsi > 50,
-    ]
-    bear = [
-        kc_lower is not None and price < kc_lower,
-        vwap is not None and vwma is not None and price < vwap and price < vwma,
-        ema200 is not None and price < ema200,
-        rsi is not None and rsi < 50,
-    ]
-
-    if sum(bull) >= 3:
+    if rsi < 30:
         return "🟢"
-    if sum(bear) >= 3:
+    if rsi > 70:
         return "🔴"
     return ""
 

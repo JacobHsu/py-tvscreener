@@ -107,4 +107,5 @@ nav:
     - Enums: api/enums.md
   - 交易策略: trading-strategies.md
   - 復盤機制: review-mechanism.md
+  - 指標有效性回測: indicator-backtest/README.md
   - Changelog: changelog.md
